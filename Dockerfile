@@ -1,14 +1,18 @@
 # Use the official RHEL 8 base image
-FROM docker.io/library/rockylinux:8-minimal
-
-# Set environment variables
-ENV APP_ENV=production \
-    APP_DEBUG=false
+FROM docker.io/library/rockylinux:9
 
 # Install system dependencies
-RUN dnf update -y && \
-    dnf install -y httpd httpd-tools php php-json php-mbstring php-pdo php-xml php-pecl-zip composer unzip && \
-    dnf clean all
+RUN yum update -y && \
+    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
+    yum -y install http://rpms.remirepo.net/enterprise/remi-release-8.rpm && \
+    yum module reset php -y && \
+    yum install -y httpd httpd-tools unzip && \
+    yum install -y @php:remi-8.2 && \
+    wget https://raw.githubusercontent.com/composer/getcomposer.org/master/web/installer -O - -q | php -- --install-dir=/usr/local/bin --filename=composer  && \
+    yum clean all
+
+WORKDIR /var/www/html
+
 
 # Copy the application files
 COPY . /var/www/html
@@ -17,13 +21,11 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 
 # Install Laravel dependencies
-RUN composer install --no-interaction --optimize-autoloader
-
-# Set permissions
-RUN chown -R apache:apache /var/www/html/storage /var/www/html/bootstrap/cache
+RUN composer update && \
+    composer install --no-interaction --optimize-autoloader
 
 # Expose the port
-EXPOSE 80
+EXPOSE 8000
 
 # Start Apache server
-CMD ["httpd", "-D", "FOREGROUND"]
+CMD ["php artisan serve"]
