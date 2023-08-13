@@ -1,5 +1,5 @@
 # Use the official RHEL 8 base image
-FROM docker.io/library/rockylinux
+FROM docker.io/library/rockylinux:8-minimal
 
 # Set environment variables
 ENV APP_ENV=production \
